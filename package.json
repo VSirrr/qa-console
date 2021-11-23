@@ -1,0 +1,67 @@
+{
+  "name": "qa-console",
+  "version": "1.0.6",
+  "description": "a console toolkit like vconsole for kuickapp",
+  "files": [
+    "index.js",
+    "component.ux",
+    "_util.js"
+  ],
+  "scripts": {
+    "precommit-msg": "echo '🚧 start pre-commit checks ...' && exit 0",
+    "publish": "yc publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+http://gitlab2.bitautotech.com/URD/fe/qa-console.git"
+  },
+  "keywords": [
+    "qa-console",
+    "vconsole",
+    "kuickapp"
+  ],
+  "author": "weijj",
+  "license": "MIT",
+  "bugs": {
+    "url": "http://gitlab2.bitautotech.com/URD/fe/qa-console/issues"
+  },
+  "homepage": "http://gitlab2.bitautotech.com/URD/fe/qa-console#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^13.1.0",
+    "@commitlint/config-conventional": "^13.1.0",
+    "@types/quickapp": "git+https://gitee.com/vivoquickapp/quickapp-types.git",
+    "husky": "3.1.0",
+    "lint-staged": "^10.5.1",
+    "prettier": "^1.15.3",
+    "prettier-plugin-ux": "^0.3.0",
+    "sass": "^1.43.4",
+    "sass-loader": "^12.3.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false,
+    "printWidth": 100,
+    "proseWrap": "never",
+    "tabWidth": 2
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "npm run precommit-msg && lint-staged"
+    }
+  },
+  "lint-staged": {
+    "**/**.{ux,js,json,less,scss,css,pcss,md,vue}": [
+      "prettier --write"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "http://npm.yiche.com/registry/"
+  }
+}

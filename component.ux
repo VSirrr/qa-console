@@ -1,0 +1,355 @@
+<template>
+  <div>
+    <div if="{{isExist}}" class="qa-console">
+      <div class="qa-console-popup" if="{{visible}}" onclick="close">
+        <tabs class="qa-console-tabs" onclick="tabClick" onchange="tabChange">
+          <tab-bar class="tab-bar">
+            <text class="tab-bar-text">Log</text>
+            <text class="tab-bar-text">Error</text>
+            <text class="tab-bar-text">Request</text>
+          </tab-bar>
+          <tab-content class="tab-content" scrollable="{{scrollable}}">
+            <!-- log -->
+            <div class="tab-content-item">
+              <list class="list" id="list1" scrollpage="{{false}}">
+                <list-item type="listItem1" class="list-item" for="{{logs1}}">
+                  <text
+                    class="{{$item.type == 'error' ? 'list-item-text text-red' : 'list-item-text'}}"
+                    onlongpress="copyInfo($item.info)"
+                  >
+                    {{ $item.info }}
+                  </text>
+                </list-item>
+              </list>
+            </div>
+            <!-- error -->
+            <div class="tab-content-item">
+              <list class="list" id="list2" scrollpage="{{false}}">
+                <list-item type="listItem2" class="list-item" for="{{logs2}}">
+                  <text class="list-item-text text-red" onlongpress="copyInfo($item.info)">
+                    {{ $item.info }}
+                  </text>
+                </list-item>
+              </list>
+            </div>
+            <!-- debug -->
+            <div class="tab-content-item">
+              <div
+                class="info-bar"
+                style="position: absolute;top: 0;right: 0;left: 0;height: 60px;"
+              >
+                <text class="url">url</text>
+                <text class="fixed-width">method</text>
+                <text class="fixed-width">status</text>
+                <text class="fixed-width">unfold</text>
+              </div>
+              <list class="list" style="margin-top: 60px" id="list3" scrollpage="{{false}}">
+                <list-item type="listItemLog3" for="{{logs3}}">
+                  <div style="flex-direction: column; flex: 1">
+                    <div class="info-bar">
+                      <text class="url">
+                        {{ $item.info.url | filterUrl }}
+                      </text>
+                      <text class="fixed-width">
+                        {{ $item.info.method }}
+                      </text>
+                      <text class="fixed-width">
+                        {{ $item.info.status }}
+                      </text>
+                      <text class="fixed-width" @click="toggle($item.info)">
+                        {{ $item.info.unfold ? 'yes' : 'no' }}
+                      </text>
+                    </div>
+                    <div class="data-panel" show="{{$item.info.unfold}}">
+                      <block if="{{$item.info.params}}">
+                        <text class="text-blue">params:</text>
+                        <text class="bg-gray" @longpress="copyInfo($item.info.params)">
+                          {{ $item.info.params }}
+                        </text>
+                      </block>
+                      <block if="{{$item.info.data}}">
+                        <text class="text-red">response:</text>
+                        <text class="bg-gray" @longpress="copyInfo($item.info.data)">
+                          {{ $item.info.data }}
+                        </text>
+                      </block>
+                    </div>
+                  </div>
+                </list-item>
+              </list>
+            </div>
+          </tab-content>
+        </tabs>
+      </div>
+      <image
+        class="qa-console-btn"
+        src="https://image.bitautoimg.com/yc-miniprogram/quickapp/assets/images/icon-tool.png"
+        alt="icon"
+        onclick="showPopup"
+        onlongpress="clearLogs"
+      ></image>
+    </div>
+  </div>
+</template>
+
+<script>
+import prompt from '@system.prompt'
+import clipboard from '@system.clipboard'
+import { quickappGlobal } from './_util'
+
+const { qaConsole } = quickappGlobal
+
+export default {
+  props: {},
+  data() {
+    return {
+      logs: [],
+      visible: false,
+      activeIndex: 0,
+      isExist: false
+    }
+  },
+  computed: {
+    logs1() {
+      return this.logs.filter(log => {
+        return log.type === 'log'
+      })
+    },
+    logs2() {
+      return this.logs.filter(log => {
+        return log.type === 'error'
+      })
+    },
+    logs3() {
+      return this.logs.filter(log => {
+        return log.type === 'debug'
+      })
+    }
+  },
+  // filters
+  /**
+   * 对 url 进行截取，只保留最后一个斜杠之后的内容
+   * @param {String} url 字符串
+   */
+  filterUrl(url) {
+    if ('string' !== typeof url) {
+      return url
+    }
+    return url.replace(/.*\/(.*)$/, '$1')
+  },
+  onInit() {
+    if (!qaConsole) {
+      return
+    }
+    this.isExist = true
+    this.getLogs()
+  },
+  onReady() {
+    this.$watch('visible', 'needScroll')
+  },
+  /**
+   * 获取日志
+   */
+  getLogs() {
+    qaConsole.attach(logs => {
+      this.logs = logs
+    })
+  },
+  /**
+   * 关闭弹层
+   */
+  close() {
+    this.visible = false
+  },
+  /**
+   * 点击 tabs 内容时阻止事件冒泡
+   * @param {Event} evt 事件对象
+   */
+  tabClick(evt) {
+    evt.stopPropagation && evt.stopPropagation()
+  },
+  /**
+   * 监听 tabs 组件触发 change 事件
+   * @param {Object} index 为激活的 tab 索引
+   */
+  tabChange({ index }) {
+    this.activeIndex = index
+    this.scrollToBottom()
+  },
+  /**
+   * 切换弹层展示与否
+   */
+  showPopup() {
+    this.visible = !this.visible
+  },
+  /**
+   * 只有显示日志面板之后才会触发滚动方法
+   * @param {Boolean} val 对应 visible 的值
+   */
+  needScroll(val) {
+    if (val) {
+      try {
+        setTimeout(() => {
+          this.scrollToBottom()
+        }, 0)
+      } catch (error) {}
+    }
+  },
+  /**
+   * 滚动到激活的 tab 中 list 的最后一项
+   */
+  scrollToBottom() {
+    const idx = +this.activeIndex + 1
+    this.$element('list' + idx).scrollTo({
+      index: this['logs' + idx].length - 1
+    })
+  },
+  /**
+   * 复制日志内容
+   * @param {String} text 日志内容
+   */
+  copyInfo(text) {
+    prompt.showDialog({
+      title: '提示',
+      message: '是要复制信息吗？',
+      buttons: [{ text: '是' }, { text: '否', color: 'red' }],
+      success() {
+        clipboard.set({
+          text,
+          success() {
+            prompt.showToast({
+              message: '复制成功',
+              duration: 1
+            })
+          }
+        })
+      }
+    })
+  },
+  /**
+   * 清空所有日志
+   */
+  clearLogs() {
+    qaConsole.clearLogs()
+  },
+  /**
+   * 切换 Request tab 中的数据面板展示效果
+   */
+  toggle(info) {
+    info.unfold = !info.unfold
+  }
+}
+</script>
+
+<style lang="scss">
+.qa-console {
+  &-tabs {
+    flex: 1;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 75%;
+    background-color: #ffffff;
+
+    .tab-bar {
+      height: 100px;
+      border-color: #bbbbbb;
+      color: #bbbbbb;
+      border-bottom-width: 1px;
+
+      &-text {
+        flex: 1;
+        text-align: center;
+
+        &:active {
+          color: #f76160;
+        }
+      }
+    }
+
+    .tab-content {
+      flex: 1;
+
+      &-item {
+        flex: 1;
+        flex-direction: column;
+
+        .list {
+          flex: 1;
+          flex-direction: column;
+
+          &-item {
+            padding: 12px;
+            border-bottom: 1px solid #e8e8e8;
+
+            &-text {
+              color: #919191;
+            }
+          }
+        }
+
+        .info-bar {
+          width: 100%;
+          border-bottom: 1px solid #e8e8e8;
+          background-color: #ffffff;
+
+          text {
+            padding: 8px;
+          }
+
+          .url {
+            flex: 1;
+            lines: 1;
+            text-overflow: ellipsis;
+          }
+
+          .fixed-width {
+            width: 140px;
+            border-left: 1px solid #e8e8e8;
+          }
+        }
+
+        .data-panel {
+          flex: 1;
+          flex-direction: column;
+          border-bottom: 1px solid #e8e8e8;
+
+          text {
+            padding: 8px;
+          }
+        }
+
+        .text-red {
+          color: #db2929;
+        }
+
+        .text-blue {
+          color: #0000ff;
+        }
+
+        .bg-gray {
+          background-color: #fafafa;
+        }
+      }
+    }
+  }
+
+  &-popup {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+
+  &-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 124px;
+    width: 100px;
+    height: 100px;
+  }
+}
+</style>
