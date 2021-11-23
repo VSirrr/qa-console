@@ -1,6 +1,6 @@
 {
   "name": "qa-console",
-  "version": "1.0.6",
+  "version": "1.0.0",
   "description": "a console toolkit like vconsole for kuickapp",
   "files": [
     "index.js",
@@ -8,8 +8,7 @@
     "_util.js"
   ],
   "scripts": {
-    "precommit-msg": "echo '🚧 start pre-commit checks ...' && exit 0",
-    "publish": "yc publish"
+    "precommit-msg": "echo '🚧 start pre-commit checks ...' && exit 0"
   },
   "repository": {
     "type": "git",
