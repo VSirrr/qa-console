@@ -1,17 +1,23 @@
 <template>
   <div>
     <div if="{{isExist}}" class="qa-console">
-      <div class="qa-console-popup" if="{{visible}}" onclick="close">
-        <tabs class="qa-console-tabs" onclick="tabClick" onchange="tabChange">
+      <div class="qa-console-popup" if="{{visible}}" onclick="hidePopup">
+        <tabs
+          class="qa-console-tabs"
+          index="{{activeIndex}}"
+          onclick="tabClick"
+          onchange="tabChange"
+        >
           <tab-bar class="tab-bar">
             <text class="tab-bar-text">Log</text>
             <text class="tab-bar-text">Error</text>
             <text class="tab-bar-text">Request</text>
+            <text class="tab-bar-text">Storage</text>
           </tab-bar>
-          <tab-content class="tab-content" scrollable="{{scrollable}}">
+          <tab-content class="tab-content" scrollable="{{false}}">
             <!-- log -->
             <div class="tab-content-item">
-              <list class="list" id="list1" scrollpage="{{false}}">
+              <list class="list" id="list1">
                 <list-item type="listItem1" class="list-item" for="{{logs1}}">
                   <text
                     class="{{$item.type == 'error' ? 'list-item-text text-red' : 'list-item-text'}}"
@@ -21,29 +27,42 @@
                   </text>
                 </list-item>
               </list>
+              <div class="toolbar">
+                <div class="toolbar-item toolbar-item-border" @click="clearLogs('log')">
+                  <text>clear</text>
+                </div>
+                <div class="toolbar-item" @click="hidePopup">
+                  <text>hide</text>
+                </div>
+              </div>
             </div>
             <!-- error -->
             <div class="tab-content-item">
-              <list class="list" id="list2" scrollpage="{{false}}">
+              <list class="list" id="list2">
                 <list-item type="listItem2" class="list-item" for="{{logs2}}">
                   <text class="list-item-text text-red" onlongpress="copyInfo($item.info)">
                     {{ $item.info }}
                   </text>
                 </list-item>
               </list>
+              <div class="toolbar">
+                <div class="toolbar-item toolbar-item-border" @click="clearLogs('error')">
+                  <text>clear</text>
+                </div>
+                <div class="toolbar-item" @click="hidePopup">
+                  <text>hide</text>
+                </div>
+              </div>
             </div>
-            <!-- debug -->
+            <!-- request -->
             <div class="tab-content-item">
-              <div
-                class="info-bar"
-                style="position: absolute;top: 0;right: 0;left: 0;height: 60px;"
-              >
+              <div class="info-bar info-bar-fixed">
                 <text class="url">url</text>
                 <text class="fixed-width">method</text>
                 <text class="fixed-width">status</text>
                 <text class="fixed-width">unfold</text>
               </div>
-              <list class="list" style="margin-top: 60px" id="list3" scrollpage="{{false}}">
+              <list class="list" id="list3" style="margin-top: 60px">
                 <list-item type="listItemLog3" for="{{logs3}}">
                   <div style="flex-direction: column; flex: 1">
                     <div class="info-bar">
@@ -77,6 +96,43 @@
                   </div>
                 </list-item>
               </list>
+              <div class="toolbar">
+                <div class="toolbar-item toolbar-item-border" @click="clearLogs('debug')">
+                  <text>clear</text>
+                </div>
+                <div class="toolbar-item" @click="hidePopup">
+                  <text>hide</text>
+                </div>
+              </div>
+            </div>
+            <!-- storage -->
+            <div class="tab-content-item">
+              <div class="info-bar info-bar-fixed">
+                <text class="key">key</text>
+                <text class="value">value</text>
+              </div>
+              <list class="list" style="margin-top: 60px">
+                <list-item type="listItemStorage" for="{{storages}}">
+                  <div style="flex-direction: column; flex: 1">
+                    <div class="info-bar">
+                      <text class="key">
+                        {{ $item.key }}
+                      </text>
+                      <text class="value" @longpress="copyInfo($item.value)">
+                        {{ $item.value }}
+                      </text>
+                    </div>
+                  </div>
+                </list-item>
+              </list>
+              <div class="toolbar">
+                <div class="toolbar-item toolbar-item-border" @click="clearStorage">
+                  <text>clear</text>
+                </div>
+                <div class="toolbar-item" @click="hidePopup">
+                  <text>hide</text>
+                </div>
+              </div>
             </div>
           </tab-content>
         </tabs>
@@ -86,7 +142,6 @@
         src="https://image.bitautoimg.com/yc-miniprogram/quickapp/assets/images/icon-tool.png"
         alt="icon"
         onclick="showPopup"
-        onlongpress="clearLogs"
       ></image>
     </div>
   </div>
@@ -95,6 +150,7 @@
 <script>
 import prompt from '@system.prompt'
 import clipboard from '@system.clipboard'
+import storage from '@system.storage'
 import { quickappGlobal } from './_util'
 
 const { qaConsole } = quickappGlobal
@@ -106,7 +162,9 @@ export default {
       logs: [],
       visible: false,
       activeIndex: 0,
-      isExist: false
+      isExist: false,
+      storageKeys: [],
+      storages: []
     }
   },
   computed: {
@@ -143,6 +201,8 @@ export default {
     }
     this.isExist = true
     this.getLogs()
+    this.getAllStorage()
+    this.$watch('storageKeys', 'storageKeysWatcher')
   },
   onReady() {
     this.$watch('visible', 'needScroll')
@@ -158,7 +218,7 @@ export default {
   /**
    * 关闭弹层
    */
-  close() {
+  hidePopup() {
     this.visible = false
   },
   /**
@@ -174,6 +234,11 @@ export default {
    */
   tabChange({ index }) {
     this.activeIndex = index
+    // storage tab 激活时，获取最新的 storage ，并且不需要滚动到最底部
+    if (index === 3) {
+      this.getAllStorage()
+      return
+    }
     this.scrollToBottom()
   },
   /**
@@ -199,7 +264,11 @@ export default {
    * 滚动到激活的 tab 中 list 的最后一项
    */
   scrollToBottom() {
-    const idx = +this.activeIndex + 1
+    // storage 面板不需要滚动到底部
+    if (this.activeIndex === 3) {
+      return
+    }
+    const idx = this.activeIndex + 1
     this.$element('list' + idx).scrollTo({
       index: this['logs' + idx].length - 1
     })
@@ -229,14 +298,45 @@ export default {
   /**
    * 清空所有日志
    */
-  clearLogs() {
-    qaConsole.clearLogs()
+  clearLogs(type) {
+    qaConsole.clearLogs(type)
   },
   /**
    * 切换 Request tab 中的数据面板展示效果
    */
   toggle(info) {
     info.unfold = !info.unfold
+  },
+  getAllStorage() {
+    let i = 0
+    const l = storage.length
+    this.storageKeys = []
+    while (i < l) {
+      storage.key({
+        index: i,
+        success: key => {
+          this.storageKeys.push(key)
+        }
+      })
+      ++i
+    }
+  },
+  storageKeysWatcher() {
+    if (this.storageKeys.length === storage.length) {
+      this.storages = []
+      this.storageKeys.forEach((key, index) => {
+        storage.get({
+          key,
+          success: value => {
+            this.storages.push({ key, value })
+          }
+        })
+      })
+    }
+  },
+  clearStorage() {
+    storage.clear()
+    this.getAllStorage()
   }
 }
 </script>
@@ -289,10 +389,34 @@ export default {
           }
         }
 
+        .toolbar {
+          height: 60px;
+          border-top: 1px solid #e8e8e8;
+
+          &-item {
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa;
+
+            &-border {
+              border-right: 1px solid #e8e8e8;
+            }
+          }
+        }
+
         .info-bar {
           width: 100%;
           border-bottom: 1px solid #e8e8e8;
           background-color: #ffffff;
+
+          &-fixed {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 60px;
+          }
 
           text {
             padding: 8px;
@@ -307,6 +431,15 @@ export default {
           .fixed-width {
             width: 140px;
             border-left: 1px solid #e8e8e8;
+          }
+
+          .key {
+            flex: 1;
+            border-right: 1px solid #e8e8e8;
+          }
+
+          .value {
+            flex: 1;
           }
         }
 

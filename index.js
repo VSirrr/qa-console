@@ -65,8 +65,8 @@ class QAConsole {
   /**
    *  清空 logs
    */
-  clearLogs() {
-    this.logs = []
+  clearLogs(type) {
+    this.logs = this.logs.filter(log => log.type !== type)
     this.notify()
   }
   /**

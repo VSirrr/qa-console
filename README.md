@@ -7,9 +7,9 @@
 ## 目前支持的功能
 
 - 重写了 console 的 log、error、debug 方法，所以只能收集通过 console.log()、console.error()、console.debug() 输出的内容，其他特殊异常无法捕获。
-- 目前一共有三个面板：Log（普通日志）、Error（错误日志）、Request（请求信息，包含请求的 url、类型、状态、参数、返回的数据等信息）
-- 长按输出的 log、error 日志内容，可以复制文本。
-- 长按图标按钮可以清空所有日志。
+- 目前一共有四个面板：Log（普通日志）、Error（错误日志）、Request（请求信息，包含请求的 url、type、status、params、response 等信息）、Storage（本地存储）
+- 长按输出的 log、error 日志内容，可以复制文本；长按 request 中的参数和返回值可以复制文本；长按 Storage 的 value 值可以复制文本。
+- 每个面板底部的工具栏：点击 clear 按钮是清空对应的内容，点击 hide 按钮是关闭弹层。
 
 ## 使用方式
 

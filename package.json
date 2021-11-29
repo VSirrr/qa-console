@@ -1,6 +1,6 @@
 {
   "name": "qa-console",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "a console toolkit like vconsole for kuickapp",
   "files": [
     "index.js",
@@ -8,23 +8,24 @@
     "_util.js"
   ],
   "scripts": {
-    "precommit-msg": "echo '🚧 start pre-commit checks ...' && exit 0"
+    "precommit-msg": "echo '🚧 start pre-commit checks ...' && exit 0",
+    "publish": "yc publish"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/VSirrr/qa-console.git"
+    "url": "git+http://gitlab2.bitautotech.com/URD/fe/qa-console.git"
   },
   "keywords": [
     "qa-console",
     "vconsole",
     "kuickapp"
   ],
-  "author": "VSirrr",
-  "license": "Apache 2.0",
+  "author": "weijj",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/VSirrr/qa-console/issues"
+    "url": "http://gitlab2.bitautotech.com/URD/fe/qa-console/issues"
   },
-  "homepage": "https://github.com/VSirrr/qa-console#readme",
+  "homepage": "http://gitlab2.bitautotech.com/URD/fe/qa-console#readme",
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
     "@commitlint/config-conventional": "^13.1.0",
@@ -58,5 +59,9 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "http://npm.yiche.com/registry/"
   }
 }
