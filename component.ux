@@ -307,6 +307,9 @@ export default {
   toggle(info) {
     info.unfold = !info.unfold
   },
+  /**
+   * 获取 Storage 的所有 key
+   */
   getAllStorage() {
     let i = 0
     const l = storage.length
@@ -321,6 +324,9 @@ export default {
       ++i
     }
   },
+  /**
+   * 监听 storageKeys 数组的长度，即当 Storage 的所有 key 被获取之后，根据 key 去获取 value
+   */
   storageKeysWatcher() {
     if (this.storageKeys.length === storage.length) {
       this.storages = []
@@ -334,9 +340,18 @@ export default {
       })
     }
   },
+  /**
+   *  清空 Storage，并重新获取 Storage
+   */
   clearStorage() {
-    storage.clear()
-    this.getAllStorage()
+    storage.clear({
+      success: () => {
+        this.getAllStorage()
+      },
+      fail: (_, code) => {
+        console.error(`qaConsole clear Storage error: code=${code}`)
+      }
+    })
   }
 }
 </script>
