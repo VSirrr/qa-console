@@ -14,7 +14,7 @@
             <text class="tab-bar-text">Request</text>
             <text class="tab-bar-text">Storage</text>
           </tab-bar>
-          <tab-content class="tab-content" scrollable="{{false}}">
+          <tab-content class="tab-content">
             <!-- log -->
             <div class="tab-content-item">
               <list class="list" id="list1">
