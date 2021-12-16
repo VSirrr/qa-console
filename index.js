@@ -20,12 +20,11 @@ class QAConsole {
    */
   init() {
     types.forEach(type => {
-      const that = this
       const originMethod = console[type]
       console[type] = function() {
-        that.addLog(type, arguments)
+        this.addLog(type, arguments)
         originMethod.apply(console, arguments)
-      }
+      }.bind(this)
     })
   }
   /**

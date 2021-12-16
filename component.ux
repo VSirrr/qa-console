@@ -1,7 +1,7 @@
 <template>
   <div>
     <div if="{{isExist}}" class="qa-console">
-      <div class="qa-console-popup" if="{{visible}}" onclick="hidePopup">
+      <div if="{{visible}}" class="qa-console-popup" onclick="hidePopup">
         <tabs
           class="qa-console-tabs"
           index="{{activeIndex}}"
@@ -163,7 +163,6 @@ export default {
       visible: false,
       activeIndex: 0,
       isExist: false,
-      storageKeys: [],
       storages: []
     }
   },
@@ -201,8 +200,7 @@ export default {
     }
     this.isExist = true
     this.getLogs()
-    this.getAllStorage()
-    this.$watch('storageKeys', 'storageKeysWatcher')
+    this.getStorage()
   },
   onReady() {
     this.$watch('visible', 'needScroll')
@@ -236,7 +234,7 @@ export default {
     this.activeIndex = index
     // storage tab 激活时，获取最新的 storage ，并且不需要滚动到最底部
     if (index === 3) {
-      this.getAllStorage()
+      this.getStorage()
       return
     }
     this.scrollToBottom()
@@ -308,37 +306,43 @@ export default {
     info.unfold = !info.unfold
   },
   /**
-   * 获取 Storage 的所有 key
+   * 获取 Storage
    */
-  getAllStorage() {
+  async getStorage() {
     let i = 0
     const l = storage.length
-    this.storageKeys = []
+    const kp = []
+
+    // 获取 key
     while (i < l) {
-      storage.key({
-        index: i,
-        success: key => {
-          this.storageKeys.push(key)
-        }
-      })
-      ++i
-    }
-  },
-  /**
-   * 监听 storageKeys 数组的长度，即当 Storage 的所有 key 被获取之后，根据 key 去获取 value
-   */
-  storageKeysWatcher() {
-    if (this.storageKeys.length === storage.length) {
-      this.storages = []
-      this.storageKeys.forEach((key, index) => {
-        storage.get({
-          key,
-          success: value => {
-            this.storages.push({ key, value })
+      const p = new Promise(resolve => {
+        storage.key({
+          index: i++,
+          success: key => {
+            resolve(key)
           }
         })
       })
+      kp.push(p)
     }
+
+    const keys = await Promise.all(kp)
+    const sp = []
+
+    // 获取 value
+    keys.forEach(key => {
+      const p = new Promise(resolve => {
+        storage.get({
+          key,
+          success: value => {
+            resolve({ key, value })
+          }
+        })
+      })
+      sp.push(p)
+    })
+
+    this.storages = await Promise.all(sp)
   },
   /**
    *  清空 Storage，并重新获取 Storage
@@ -346,10 +350,7 @@ export default {
   clearStorage() {
     storage.clear({
       success: () => {
-        this.getAllStorage()
-      },
-      fail: (_, code) => {
-        console.error(`qaConsole clear Storage error: code=${code}`)
+        this.getStorage()
       }
     })
   }
