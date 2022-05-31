@@ -67,6 +67,6 @@ function request(params) {
 
 - 使用完 qa-console 组件之后，把相关代码注释掉，防止打包时增加包的体积。
 
-## 问题记录
+<!-- ## 问题记录 -->
 
-- 华为品牌手机，页面刷新之后报错（cannot set property logs of undefined at Vm.set），猜测是编译问题
+<!-- - 华为品牌手机，页面刷新之后报错（cannot set property logs of undefined at Vm.set），猜测是编译问题 -->
