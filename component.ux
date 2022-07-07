@@ -139,8 +139,7 @@
       </div>
       <image
         class="qa-console-btn"
-        src="https://image.bitautoimg.com/yc-miniprogram/quickapp/assets/images/icon-tool.png"
-        alt="icon"
+        src="./icon-tool.png"
         onclick="showPopup"
       ></image>
     </div>

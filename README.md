@@ -1,4 +1,4 @@
-# qa-console
+# @vsirrr/qa-console
 
 ## 背景
 
@@ -13,14 +13,22 @@
 
 ## 使用方式
 
+### 安装
+
+```shell
+npm i -D @vsirrr/qa-console
+```
+
+### demo
+
 ```js
 // 1. 在 app.ux 中进行初始化
 if(process.env.NODE_ENV === 'development') {
-  require('qa-console')
+  require('@vsirrr/qa-console')
 }
 
 // 2. 在使用该功能的地方引入 qa-console 组件 不支持单次引用多页面使用
-<import name="qa-console" src="qa-console/component.ux"></import>
+<import name="qa-console" src="@vsirrr/qa-console/component.ux"></import>
 
 <qa-console></qa-console>
 
